@@ -21,6 +21,11 @@ def init_db():
             error_rate REAL
         )
     """)
+    # Migration : ajout des colonnes manquantes si ancienne version de la table
+    existing = {row[1] for row in conn.execute("PRAGMA table_info(runs)")}
+    for col, typedef in [("p95_latency", "REAL"), ("error_rate", "REAL")]:
+        if col not in existing:
+            conn.execute(f"ALTER TABLE runs ADD COLUMN {col} {typedef} DEFAULT 0")
     conn.commit()
     conn.close()
 
