@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agify API Monitor</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background: #f0f2f5; }
+    .card { border: none; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    .stat-card { text-align: center; padding: 20px; }
+    .stat-value { font-size: 2rem; font-weight: 700; }
+    .badge-pass { background: #198754; }
+    .badge-fail { background: #dc3545; }
+    .run-header { cursor: pointer; }
+    .run-header:hover { background: #f8f9fa; }
+  </style>
+</head>
+<body>
+<div class="container py-4">
+
+  <!-- Header -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1 class="mb-0">Agify API Monitor</h1>
+      <small class="text-muted">API testée : <a href="https://api.agify.io" target="_blank">https://api.agify.io</a></small>
+    </div>
+    <form method="POST" action="/run">
+      <button type="submit" class="btn btn-primary px-4">▶ Lancer les tests</button>
+    </form>
+  </div>
+
+  <!-- Cartes statistiques -->
+  {% if history %}
+  {% set last = history[0] %}
+  {% set pass_rate = ((last.passed / last.total) * 100) | round(1) %}
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card stat-card">
+        <div class="stat-value text-primary">{{ history | length }}</div>
+        <div class="text-muted">Runs effectués</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card stat-card">
+        <div class="stat-value {% if pass_rate == 100 %}text-success{% elif pass_rate >= 70 %}text-warning{% else %}text-danger{% endif %}">
+          {{ pass_rate }}%
+        </div>
+        <div class="text-muted">Taux de réussite (dernier run)</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card stat-card">
+        <div class="stat-value text-info">{{ last.avg_latency }} ms</div>
+        <div class="text-muted">Latence moyenne (dernier run)</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card stat-card">
+        <div class="stat-value {% if last.failed == 0 %}text-success{% else %}text-danger{% endif %}">
+          {{ last.passed }}/{{ last.total }}
+        </div>
+        <div class="text-muted">Tests passés (dernier run)</div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Liens utiles -->
+  <div class="mb-3">
+    <a href="/api/results" class="btn btn-outline-secondary btn-sm me-2">📥 Export JSON</a>
+    <a href="/health" class="btn btn-outline-secondary btn-sm">❤️ Health check</a>
+  </div>
+
+  <!-- Historique des runs -->
+  <div class="card">
+    <div class="card-header bg-white fw-bold">Historique des runs</div>
+    <div class="card-body p-0">
+      {% if not history %}
+      <div class="p-4 text-center text-muted">Aucun run pour l'instant. Cliquez sur "Lancer les tests" !</div>
+      {% endif %}
+
+      <div class="accordion" id="runsAccordion">
+        {% for run in history %}
+        <div class="accordion-item border-0 border-bottom">
+          <h2 class="accordion-header">
+            <button class="accordion-button {% if not loop.first %}collapsed{% endif %} run-header" type="button"
+                    data-bs-toggle="collapse" data-bs-target="#run{{ run.id }}">
+              <span class="me-3 text-muted small">{{ run.timestamp }} UTC</span>
+              <span class="badge {% if run.failed == 0 %}bg-success{% else %}bg-danger{% endif %} me-2">
+                {{ run.passed }}/{{ run.total }} tests OK
+              </span>
+              <span class="badge bg-secondary">{{ run.avg_latency }} ms moy.</span>
+            </button>
+          </h2>
+          <div id="run{{ run.id }}" class="accordion-collapse collapse {% if loop.first %}show{% endif %}">
+            <div class="accordion-body p-0">
+              <table class="table table-sm mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th>Test</th>
+                    <th>Résultat</th>
+                    <th>Message</th>
+                    <th>Latence</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for t in run.results %}
+                  <tr>
+                    <td>{{ t.name }}</td>
+                    <td>
+                      {% if t.passed %}
+                        <span class="badge bg-success">PASS</span>
+                      {% else %}
+                        <span class="badge bg-danger">FAIL</span>
+                      {% endif %}
+                    </td>
+                    <td class="text-muted small">{{ t.message }}</td>
+                    <td class="small">{{ t.latency_ms }} ms</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+    </div>
+  </div>
+
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
