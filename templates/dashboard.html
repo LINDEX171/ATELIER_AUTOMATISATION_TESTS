@@ -72,6 +72,24 @@
   </div>
   {% endif %}
 
+  <!-- Graphiques -->
+  {% if history | length > 1 %}
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <div class="card p-3">
+        <div class="fw-bold mb-2">Taux de réussite (%)</div>
+        <canvas id="chartPassRate" height="120"></canvas>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card p-3">
+        <div class="fw-bold mb-2">Latence moyenne (ms)</div>
+        <canvas id="chartLatency" height="120"></canvas>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <!-- Liens utiles -->
   <div class="mb-3">
     <a href="/api/results" class="btn btn-outline-secondary btn-sm me-2">📥 Export JSON</a>
@@ -138,5 +156,54 @@
 
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% if history | length > 1 %}
+<script>
+  const runs = {{ history | reverse | list | tojson }};
+  const labels = runs.map(r => r.timestamp.slice(5, 16));
+  const passRates = runs.map(r => Math.round((r.passed / r.total) * 100));
+  const latencies = runs.map(r => r.avg_latency);
+
+  new Chart(document.getElementById('chartPassRate'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Taux de réussite (%)',
+        data: passRates,
+        borderColor: '#198754',
+        backgroundColor: 'rgba(25,135,84,0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4
+      }]
+    },
+    options: {
+      scales: { y: { min: 0, max: 100 } },
+      plugins: { legend: { display: false } }
+    }
+  });
+
+  new Chart(document.getElementById('chartLatency'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Latence moy. (ms)',
+        data: latencies,
+        borderColor: '#0dcaf0',
+        backgroundColor: 'rgba(13,202,240,0.1)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 4
+      }]
+    },
+    options: {
+      scales: { y: { beginAtZero: true } },
+      plugins: { legend: { display: false } }
+    }
+  });
+</script>
+{% endif %}
 </body>
 </html>
