@@ -35,10 +35,18 @@
   {% set last = history[0] %}
   {% set pass_rate = ((last.passed / last.total) * 100) | round(1) %}
   <div class="row g-3 mb-4">
-    <div class="col-md-3">
+    <div class="col-md-2">
       <div class="card stat-card">
         <div class="stat-value text-primary">{{ history | length }}</div>
         <div class="text-muted">Runs effectués</div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card stat-card">
+        <div class="stat-value {% if last.failed == 0 %}text-success{% else %}text-danger{% endif %}">
+          {{ last.passed }}/{{ last.total }}
+        </div>
+        <div class="text-muted">Tests passés</div>
       </div>
     </div>
     <div class="col-md-3">
@@ -46,21 +54,19 @@
         <div class="stat-value {% if pass_rate == 100 %}text-success{% elif pass_rate >= 70 %}text-warning{% else %}text-danger{% endif %}">
           {{ pass_rate }}%
         </div>
-        <div class="text-muted">Taux de réussite (dernier run)</div>
+        <div class="text-muted">Taux de réussite</div>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
       <div class="card stat-card">
         <div class="stat-value text-info">{{ last.avg_latency }} ms</div>
-        <div class="text-muted">Latence moyenne (dernier run)</div>
+        <div class="text-muted">Latence moyenne</div>
       </div>
     </div>
     <div class="col-md-3">
       <div class="card stat-card">
-        <div class="stat-value {% if last.failed == 0 %}text-success{% else %}text-danger{% endif %}">
-          {{ last.passed }}/{{ last.total }}
-        </div>
-        <div class="text-muted">Tests passés (dernier run)</div>
+        <div class="stat-value text-warning">{{ last.p95_latency }} ms</div>
+        <div class="text-muted">Latence p95</div>
       </div>
     </div>
   </div>
